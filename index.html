@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout Navideño: Operación Salvar la Ilusión</title>
+    <link rel="icon" type="image/x-icon" href="./resources/favicon.ico">
+
+    <style>
+        /* VARIABLES POR DEFECTO (PORTADA / NAVIDAD GENERAL) */
+        :root {
+            --theme-primary: #B91C1C;      /* Rojo Navidad */
+            --theme-secondary: #15803D;    /* Verde Abeto */
+            --theme-accent: #D97706;       /* Dorado Estrella */
+            --theme-bg: #FEF2F2;           /* Fondo suave */
+            --theme-card-bg: #FFFFFF;
+            --theme-box-bg: #FFFBEB;
+            --theme-border: #FDE68A;
+            --theme-shadow: rgba(185, 28, 28, 0.18);
+            --text-dark: #1E293B;
+        }
+
+        /* TEMA 1: LOS TRES REYES MAGOS (Dorado, Púrpura Real y Azul Noche) */
+        body.theme-reyes {
+            --theme-primary: #6D28D9;
+            --theme-secondary: #D97706;
+            --theme-accent: #F59E0B;
+            --theme-bg: #F5F3FF;
+            --theme-box-bg: #FEF3C7;
+            --theme-border: #DDD6FE;
+            --theme-shadow: rgba(109, 40, 217, 0.2);
+        }
+
+        /* TEMA 2: EL PAJE REAL (Azul Zafiro y Plata/Oro) */
+        body.theme-paje {
+            --theme-primary: #1D4ED8;
+            --theme-secondary: #0284C7;
+            --theme-accent: #EAB308;
+            --theme-bg: #EFF6FF;
+            --theme-box-bg: #E0F2FE;
+            --theme-border: #BFDBFE;
+            --theme-shadow: rgba(29, 78, 216, 0.2);
+        }
+
+        /* TEMA 3: EL OLENTZERO (Carbón, Verde Bosque Vasco y Rojo Txapela) */
+        body.theme-olentzero {
+            --theme-primary: #1F2937;
+            --theme-secondary: #B91C1C;
+            --theme-accent: #15803D;
+            --theme-bg: #F3F4F6;
+            --theme-box-bg: #E5E7EB;
+            --theme-border: #9CA3AF;
+            --theme-shadow: rgba(31, 41, 55, 0.25);
+        }
+
+        /* TEMA 4: EL TIÓ DE NADAL (Madera cálida, Rojo Barretina y Verde Acebo) */
+        body.theme-tio {
+            --theme-primary: #92400E;
+            --theme-secondary: #DC2626;
+            --theme-accent: #16A34A;
+            --theme-bg: #FFFBEB;
+            --theme-box-bg: #FEF3C7;
+            --theme-border: #FCD34D;
+            --theme-shadow: rgba(146, 64, 14, 0.2);
+        }
+
+        /* TEMA 5: RUDOLF EL RENO (Azul Hielo Polar y Rojo Nariz Brillante) */
+        body.theme-rudolf {
+            --theme-primary: #0369A1;
+            --theme-secondary: #E11D48;
+            --theme-accent: #38BDF8;
+            --theme-bg: #F0F9FF;
+            --theme-box-bg: #E0F2FE;
+            --theme-border: #7DD3FC;
+            --theme-shadow: rgba(3, 105, 161, 0.2);
+        }
+
+        /* TEMA 6: PAPÁ NOEL / SAN NICOLÁS (Rojo Intenso, Blanco Nieve y Verde Elfo) */
+        body.theme-papanoel {
+            --theme-primary: #DC2626;
+            --theme-secondary: #15803D;
+            --theme-accent: #FACC15;
+            --theme-bg: #FEF2F2;
+            --theme-box-bg: #DCFCE7;
+            --theme-border: #FECACA;
+            --theme-shadow: rgba(220, 38, 38, 0.22);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--theme-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background-color 0.5s ease;
+            background-image: 
+                radial-gradient(circle at 10% 15%, var(--theme-shadow) 0%, transparent 40%),
+                radial-gradient(circle at 90% 85%, var(--theme-shadow) 0%, transparent 40%);
+        }
+
+        /* =========================================================
+           SISTEMA MATEMÁTICO PURO EN HTML + CSS (SIN LIBRERÍAS)
+           ========================================================= */
+        .math-expr {
+            font-family: 'Cambria Math', 'Times New Roman', Georgia, serif;
+            font-size: 1.12em;
+            color: #0F172A;
+            white-space: nowrap;
+        }
+
+        .math-var {
+            font-family: 'Cambria Math', 'Times New Roman', Georgia, serif;
+            font-style: italic;
+            font-weight: 600;
+        }
+
+        .math-op {
+            margin: 0 3px;
+        }
+
+        /* Fracciones apiladas limpias por CSS */
+        .math-frac {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 4px;
+            font-size: 0.92em;
+            line-height: 1.1;
+        }
+
+        .math-frac-num {
+            padding: 0 4px 2px 4px;
+            border-bottom: 1.5px solid currentColor;
+            text-align: center;
+        }
+
+        .math-frac-den {
+            padding: 2px 4px 0 4px;
+            text-align: center;
+        }
+
+        /* Sistema de 2 ecuaciones con llave real en CSS */
+        .math-system-box {
+            display: inline-flex;
+            align-items: stretch;
+            background: #F8FAFC;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 10px;
+            padding: 8px 16px 8px 10px;
+            margin: 8px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-family: 'Cambria Math', 'Times New Roman', Georgia, serif;
+            font-size: 1.15rem;
+        }
+
+        .math-brace {
+            display: flex;
+            align-items: center;
+            font-size: 2.8rem;
+            font-weight: 300;
+            line-height: 1;
+            margin-right: 10px;
+            color: var(--theme-primary);
+            user-select: none;
+            transform: scaleY(1.15);
+        }
+
+        .math-system-eqs {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
+            text-align: left;
+        }
+
+        /* Raíz cuadrada con barra superior (vinculum) en CSS */
+        .math-sqrt {
+            display: inline-flex;
+            align-items: baseline;
+            margin: 0 2px;
+        }
+
+        .math-sqrt-sign {
+            font-size: 1.15em;
+            margin-right: 1px;
+        }
+
+        .math-sqrt-radicand {
+            border-top: 1.5px solid currentColor;
+            padding: 0 3px;
+        }
+
+        /* Subíndices y superíndices limpios */
+        .math-expr sup, .math-expr sub {
+            font-size: 0.72em;
+            line-height: 0;
+        }
+
+        /* Adornos Navideños Superiores */
+        .christmas-ornaments {
+            width: 100%;
+            max-width: 920px;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 16px;
+        }
+        .ornament {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            background: var(--theme-card-bg);
+            border: 3px solid var(--theme-primary);
+            box-shadow: 0 4px 0 var(--theme-secondary);
+            animation: swingOrnament 2.8s ease-in-out infinite alternate;
+            transition: all 0.4s ease;
+        }
+        .ornament:nth-child(2) { animation-delay: 0.4s; }
+        .ornament:nth-child(3) { animation-delay: 0.8s; }
+        .ornament:nth-child(4) { animation-delay: 1.2s; }
+        .ornament:nth-child(5) { animation-delay: 1.6s; }
+
+        @keyframes swingOrnament {
+            0% { transform: translateY(0px) rotate(-6deg); }
+            100% { transform: translateY(-6px) rotate(6deg); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 920px;
+            background: var(--theme-card-bg);
+            border: 5px solid var(--theme-primary);
+            border-radius: 26px;
+            padding: 32px;
+            box-shadow: 0 14px 36px var(--theme-shadow), 0 6px 0 var(--theme-secondary);
+            position: relative;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        /* Header & Temporizador */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px dashed var(--theme-border);
+            padding-bottom: 15px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            color: var(--theme-primary);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            transition: color 0.4s ease;
+        }
+
+        .timer-box {
+            background: var(--theme-accent);
+            border: 3px solid var(--theme-primary);
+            padding: 8px 20px;
+            border-radius: 16px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            letter-spacing: 2px;
+            box-shadow: 0 3px 0 var(--theme-secondary);
+        }
+
+        /* Gestión de Pantallas */
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.35s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Formularios y Botones */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--theme-primary);
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        input[type="text"], input[type="number"], input[type="password"], select {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 14px;
+            border: 3px solid var(--theme-border);
+            background: #F8FAFC;
+            color: var(--text-dark);
+            font-size: 1.05rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, select:focus {
+            border-color: var(--theme-primary);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px var(--theme-shadow);
+        }
+
+        /* Panel de Respuesta Interactiva (SCD / SCI / SI) */
+        .answer-panel {
+            background: #F8FAFC;
+            border: 3px solid var(--theme-primary);
+            border-radius: 18px;
+            padding: 20px;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px var(--theme-shadow);
+        }
+
+        .dynamic-answer-box {
+            margin-top: 16px;
+            padding: 16px;
+            background: #FFFFFF;
+            border: 2px dashed var(--theme-secondary);
+            border-radius: 14px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .two-cols {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .line-equation-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--theme-primary);
+        }
+
+        .line-equation-row input {
+            width: 115px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .btn {
+            background: var(--theme-primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 var(--theme-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 6px 0 var(--theme-secondary);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--theme-secondary);
+        }
+
+        .btn-secondary {
+            background: var(--theme-secondary);
+            box-shadow: 0 4px 0 var(--theme-primary);
+        }
+
+        /* Botones Especiales: Tradición del Personaje y Pista de los Reyes Magos */
+        .character-tools-bar {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin: 14px 0 18px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn-lore {
+            background: #FFFFFF;
+            color: var(--theme-primary);
+            border: 2.5px solid var(--theme-primary);
+            box-shadow: 0 3px 0 var(--theme-primary);
+            font-size: 0.95rem;
+            padding: 9px 18px;
+        }
+
+        .btn-lore:hover {
+            background: var(--theme-box-bg);
+        }
+
+        .btn-magi-hint {
+            background: linear-gradient(135deg, #6D28D9, #4C1D95);
+            color: #FEF08A;
+            border: 2.5px solid #F59E0B;
+            box-shadow: 0 3px 0 #B45309;
+            font-size: 0.95rem;
+            padding: 9px 18px;
+        }
+
+        .btn-magi-hint:hover {
+            filter: brightness(1.12);
+        }
+
+        .btn-teacher {
+            background: #F1F5F9;
+            color: #475569;
+            border: 2px solid #CBD5E1;
+            box-shadow: none;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+
+        .btn-teacher:hover {
+            background: #E2E8F0;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Imágenes */
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin: 12px 0 18px 0;
+        }
+
+        .game-image {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            max-height: 290px;
+            object-fit: contain;
+            background: #FFFFFF;
+            border-radius: 18px;
+            margin: 0 auto;
+            border: 3px solid var(--theme-border);
+            padding: 8px;
+        }
+
+        .action-below-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 18px;
+        }
+
+        /* Avisos e Instrucciones */
+        .notebook-notice {
+            background: #FFFBEB;
+            border-left: 6px solid var(--theme-accent);
+            border-top: 1px solid #FDE68A;
+            border-right: 1px solid #FDE68A;
+            border-bottom: 1px solid #FDE68A;
+            padding: 13px 16px;
+            margin: 14px 0;
+            border-radius: 0 14px 14px 0;
+            font-size: 0.96rem;
+            color: #78350F;
+        }
+
+        .problem-desc {
+            font-size: 1.12rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            background: var(--theme-box-bg);
+            border: 2px solid var(--theme-border);
+            padding: 20px;
+            border-radius: 16px;
+            color: var(--text-dark);
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        .variables-legend {
+            background: #FFFFFF;
+            border-left: 5px solid var(--theme-primary);
+            border-radius: 0 10px 10px 0;
+            padding: 10px 14px;
+            margin-top: 14px;
+            font-size: 0.98rem;
+            color: #334155;
+        }
+
+        /* Navegación */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            text-align: center;
+            margin-bottom: 12px;
+            font-weight: 800;
+            color: #FFFFFF;
+            background: var(--theme-primary);
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 2px 6px var(--theme-shadow);
+        }
+
+        /* Modales (Profesor, Avisos, Tradición y Pista Reyes Magos) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.78);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background: #FFFFFF;
+            border: 4px solid var(--theme-primary);
+            border-radius: 24px;
+            max-width: 720px;
+            width: 100%;
+            max-height: 86vh;
+            overflow-y: auto;
+            padding: 28px;
+            position: relative;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+            animation: popModal 0.25s ease-out;
+        }
+
+        @keyframes popModal {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 14px; right: 18px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--theme-primary);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .lore-badge {
+            display: inline-block;
+            background: var(--theme-box-bg);
+            color: var(--theme-primary);
+            border: 1.5px solid var(--theme-primary);
+            font-weight: 800;
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 14px;
+            margin-bottom: 10px;
+        }
+
+        .magi-hint-card {
+            background: linear-gradient(145deg, #F5F3FF, #FEF3C7);
+            border: 3px solid #F59E0B;
+            border-radius: 16px;
+            padding: 18px;
+            margin: 14px 0;
+            text-align: left;
+            color: #1E1B4B;
+            font-size: 1.05rem;
+            line-height: 1.65;
+        }
+
+        /* Estilos Pantalla Éxito/Fracaso */
+        .result-screen {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .result-screen h2 {
+            font-size: 2.05rem;
+            margin-bottom: 15px;
+        }
+
+        .success-title { color: #15803D; }
+        .fail-title { color: #DC2626; }
+
+        .teacher-badge {
+            display: inline-block;
+            background: var(--theme-primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .solution-item {
+            border-bottom: 2px dashed #E2E8F0;
+            padding: 16px 0;
+            text-align: left;
+            line-height: 1.75;
+        }
+
+        .solution-item:last-child { border-bottom: none; }
+
+        /* Tabla resumen final */
+        .summary-card {
+            background: #FFFFFF;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid var(--theme-primary);
+            text-align: left;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="christmas-ornaments" id="top-ornaments">
+        <div class="ornament">👑</div>
+        <div class="ornament">📜</div>
+        <div class="ornament">🪵</div>
+        <div class="ornament">🦌</div>
+        <div class="ornament">🎅</div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 id="app-title">🎄 Operación: Salvar la Ilusión de la Navidad</h1>
+            <div class="timer-box" id="timer-display">75:00</div>
+        </header>
+
+        <!-- PANTALLA 0: CONFIGURACIÓN -->
+        <div id="screen-0" class="screen active">
+            <h2 style="color: var(--theme-primary); margin-bottom: 12px; text-align: center; font-size: 1.55rem;">
+                ¡Alerta Mágica! Krampus ha saboteado la Navidad
+            </h2>
+            <p style="margin-bottom: 18px; line-height: 1.65; text-align: center; font-size: 1.05rem;">
+                El malvado <strong>Krampus</strong> ha lanzado un hechizo de caos algebraico sobre todos los seres mágicos de la Navidad para que los niños pierdan la ilusión. Vuestra misión empieza en <strong>Oriente</strong>: leed con atención cada situación, <strong>traducid el enunciado a un sistema de dos ecuaciones con dos incógnitas</strong> y clasificad sus soluciones. Una vez liberados los <strong>Tres Reyes Magos</strong>, ¡ellos os darán pistas reales para rescatar al resto!
+            </p>
+
+            <div class="image-wrapper">
+                <img src="./resources/img_portada_navidad.png" alt="Krampus y los Seres Mágicos de la Navidad" class="game-image">
+            </div>
+
+            <div class="form-group">
+                <label for="student-name">Nombre del Equipo / Alumnos (4º ESO Matemáticas B):</label>
+                <input type="text" id="student-name" placeholder="Escribe los nombres del equipo aquí..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="time-select">Tiempo de la Misión (60 - 90 Minutos):</label>
+                <select id="time-select">
+                    <option value="60">60 Minutos (Desafío Intenso)</option>
+                    <option value="75" selected>75 Minutos (Duración Recomendada)</option>
+                    <option value="90">90 Minutos (Sesión Extendida)</option>
+                </select>
+            </div>
+
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn" onclick="startGame()">¡Comenzar el Rescate! ✨</button>
+            </div>
+
+            <hr style="margin-top: 25px; border: none; border-top: 2px dashed var(--theme-border);">
+            <div style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: #64748B;">
+                Recurso Educativo Abierto (REA) — 4º ESO Matemáticas B (Planteamiento y Discusión de Sistemas)
+                <div style="display: flex; justify-content: center; margin-top: 8px;">
+                    <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
+                        <img src="./resources/CC_BY_SA.png" alt="Creative Commons Reconocimiento - Compartir Igual" style="display: block; height: 32px; margin: 0 auto;">
+                    </a>
+                </div>
+            </div>  
+            <div style="text-align: right; margin-top: 15px;">
+                <button class="btn btn-teacher" onclick="openTeacherModal()">🔒 Modo Profesor</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE PROBLEMA DINÁMICA (RETOS 1 A 6) -->
+        <div id="screen-problem" class="screen">
+            <div style="text-align: center;">
+                <div class="progress-bar" id="problem-progress">Misión 1 de 6</div>
+            </div>
+            <h2 id="problem-title" style="color: var(--theme-primary); margin-bottom: 10px; text-align: center;"></h2>
+
+            <!-- BARRA DE BOTONES: TRADICIÓN DEL PERSONAJE + PISTA DE REYES MAGOS (A PARTIR DEL RETO 2) -->
+            <div class="character-tools-bar">
+                <button class="btn btn-lore" id="btn-character-lore" onclick="openCharacterModal()">
+                    📖 Conocer al Personaje y su Tradición
+                </button>
+                <button class="btn btn-magi-hint" id="btn-magi-hint" onclick="openMagiHintModal()" style="display: none;">
+                    👑 Pedir Pista a los Reyes Magos
+                </button>
+            </div>
+            
+            <div class="notebook-notice">
+                ✏️ <strong>Trabajo en el Cuaderno:</strong> Define las incógnitas, plantea el sistema de dos ecuaciones a partir del texto y resuélvelo. Después, selecciona abajo qué tipo de sistema es y completa los datos correspondientes.
+            </div>
+
+            <!-- 1. IMAGEN CENTRADA DEL PROBLEMA -->
+            <div id="problem-image-box" class="image-wrapper"></div>
+
+            <!-- 2. TEXTO DEL ENUNCIADO (SIN EL SISTEMA ESCRITO) -->
+            <div class="problem-desc" id="problem-desc"></div>
+
+            <!-- 3. PANEL DE RESPUESTA CON DESPLEGABLE (SCD / SCI / SI) -->
+            <div class="answer-panel">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="system-type-select">📊 Paso 1: Clasifica el sistema según sus soluciones:</label>
+                    <select id="system-type-select" onchange="handleSystemTypeChange()">
+                        <option value="">-- Selecciona el tipo de sistema --</option>
+                        <option value="SCD">Sistema con una solución (Sistema Compatible Determinado)</option>
+                        <option value="SCI">Sistema con infinitas soluciones (Sistema Compatible Indeterminado)</option>
+                        <option value="SI">Sistema sin solución (Sistema Incompatible)</option>
+                    </select>
+                </div>
+
+                <!-- OPCIÓN A: CAMPOS PARA SCD (1 SOLUCIÓN: x e y) -->
+                <div id="box-scd" class="dynamic-answer-box" style="display: none;">
+                    <p style="font-weight: 700; color: var(--theme-primary); margin-bottom: 6px;">
+                        🎯 Paso 2: Introduce la solución única del sistema:
+                    </p>
+                    <div class="two-cols">
+                        <div>
+                            <label for="input-scd-x" id="label-scd-x" style="font-size: 0.95rem;">Valor de <span class="math-var">x</span>:</label>
+                            <input type="text" id="input-scd-x" placeholder="Ej: 12" oninput="saveCurrentAnswer()">
+                        </div>
+                        <div>
+                            <label for="input-scd-y" id="label-scd-y" style="font-size: 0.95rem;">Valor de <span class="math-var">y</span>:</label>
+                            <input type="text" id="input-scd-y" placeholder="Ej: 5" oninput="saveCurrentAnswer()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OPCIÓN B: CAMPOS PARA SCI (INFINITAS SOLUCIONES: ECUACIÓN DE LA RECTA) -->
+                <div id="box-sci" class="dynamic-answer-box" style="display: none;">
+                    <p style="font-weight: 700; color: var(--theme-primary); margin-bottom: 6px;">
+                        ♾️ Paso 2: Como las rectas coinciden, expresa la recta de infinitas soluciones en forma explícita (<span class="math-expr"><span class="math-var">y</span> = <span class="math-var">m</span> &middot; <span class="math-var">x</span> + <span class="math-var">n</span></span>):
+                    </p>
+                    <p style="font-size: 0.9rem; color: #475569;">
+                        Despeja <span class="math-var">y</span> en función de <span class="math-var">x</span> e introduce la pendiente (<span class="math-var">m</span>) y la ordenada en el origen (<span class="math-var">n</span>). Puedes usar decimales (ej: <code>1.5</code>) o fracciones (ej: <code>3/2</code>).
+                    </p>
+                    <div class="line-equation-row">
+                        <span class="math-expr"><span class="math-var">y</span> =</span>
+                        <input type="text" id="input-sci-m" placeholder="m (ej: 3/2)" oninput="saveCurrentAnswer()">
+                        <span class="math-expr">&middot; <span class="math-var">x</span> + (</span>
+                        <input type="text" id="input-sci-n" placeholder="n (ej: -6)" oninput="saveCurrentAnswer()">
+                        <span class="math-expr">)</span>
+                    </div>
+                </div>
+
+                <!-- OPCIÓN C: MENSAJE PARA SI (SIN SOLUCIÓN) -->
+                <div id="box-si" class="dynamic-answer-box" style="display: none;">
+                    <p style="font-weight: 700; color: var(--theme-secondary);">
+                        🚫 Paso 2: Has clasificado el sistema como Incompatible (rectas paralelas sin puntos en común).
+                    </p>
+                    <p style="font-size: 0.95rem; color: #334155; margin-top: 6px;">
+                        No es necesario introducir valores numéricos porque el sistema carece de solución. Asegúrate de haber dejado justificada la incompatibilidad en tu cuaderno y pulsa <strong>Siguiente Misión</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" id="btn-prev" onclick="navigateProblem(-1)">⬅️ Anterior</button>
+                <button class="btn" id="btn-next" onclick="navigateProblem(1)">Siguiente ➡️</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DEL CANDADO FINAL -->
+        <div id="screen-lock" class="screen">
+            <h2 style="color: var(--theme-primary); text-align: center; margin-bottom: 10px;">🔓 El Gran Cofre del Antídoto de Krampus</h2>
+            <p style="text-align: center; margin-bottom: 15px; font-size: 1.05rem;">
+                Equipo de rescate: <strong id="lock-student-name" style="color: var(--theme-secondary);"></strong>
+            </p>
+
+            <div class="notebook-notice" style="background: #FEF2F2; border-color: var(--theme-primary); color: #7F1D1D;">
+                🔑 <strong>Verificación Final de la Misión:</strong><br>
+                Comprobad en el resumen inferior que habéis planteado, clasificado y resuelto correctamente los 6 sistemas de Krampus. Cuando estéis seguros de vuestras respuestas, pulsad <strong>¡Romper el Hechizo!</strong>
+            </div>
+
+            <div class="image-wrapper">
+                <img src="./resources/img_candado_navidad.png" alt="Cofre Final de Navidad" class="game-image">
+            </div>
+
+            <div style="background: #F8FAFC; border: 2px solid var(--theme-border); padding: 16px; border-radius: 16px; margin-bottom: 20px;">
+                <h3 style="color: var(--theme-primary); font-size: 1.05rem; margin-bottom: 12px;">Resumen de vuestras respuestas por personaje:</h3>
+                <div id="summary-answers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+                    <!-- Rellenado dinámicamente -->
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="goToProblem(6)">⬅️ Revisar Misiones</button>
+                <button class="btn" onclick="checkAllSolutions()">¡Romper el Hechizo de Krampus! 🎄</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE ÉXITO -->
+        <div id="screen-success" class="screen result-screen">
+            <h2 class="success-title">🎉 ¡NAVIDAD SALVADA, <span class="player-name-display"></span>! 🎉</h2>
+            <p style="font-size: 1.15rem; margin-bottom: 20px; line-height: 1.6;">
+                ¡Enhorabuena! Habéis planteado, clasificado y resuelto todos los sistemas con éxito. Krampus ha sido derrotado y la ilusión de todos los niños y niñas del mundo vuelve a brillar.
+            </p>
+            
+            <div class="image-wrapper">
+                <img src="./resources/img_exito_navidad.png" alt="Seres Mágicos Celebrando" class="game-image">
+            </div>
+
+            <div class="action-below-image">
+                <button class="btn" onclick="resetApp()">Jugar de Nuevo 🔄</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE FRACASO -->
+        <div id="screen-fail" class="screen result-screen">
+            <h2 class="fail-title">😈 ¡KRAMPUS RESISTE EL ATAQUE, <span class="player-name-display"></span>! 😈</h2>
+            <p id="fail-feedback-text" style="font-size: 1.15rem; margin-bottom: 20px; line-height: 1.6;">
+                Algún sistema no está bien planteado, clasificado o resuelto (o se ha agotado el tiempo). ¡No dejéis que desaparezca la Navidad! Revisad vuestras ecuaciones y volved a intentarlo.
+            </p>
+            
+            <div class="image-wrapper">
+                <img src="./resources/img_fracaso_navidad.png" alt="Krampus Riendo" class="game-image">
+            </div>
+            
+            <div class="action-below-image" style="gap: 14px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" id="btn-retry-from-fail" onclick="goToProblem(1)">Revisar Respuestas 🔍</button>
+                <button class="btn" onclick="resetApp()">Reiniciar Misión 🔄</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL PERSONALIZADO DE AVISOS -->
+    <div class="modal" id="custom-alert-modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <h3 style="color: var(--theme-primary); margin-bottom: 15px; font-size: 1.4rem;">📢 Mensaje del Polo Norte</h3>
+            <p id="alert-modal-text" style="font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px;"></p>
+            <button class="btn" onclick="closeCustomAlert()">¡Entendido!</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE INFORMACIÓN DEL PERSONAJE Y TRADICIÓN NAVIDEÑA -->
+    <div class="modal" id="character-lore-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="closeCharacterModal()">&times;</span>
+            <div class="lore-badge" id="lore-origin-badge">Tradición Navideña</div>
+            <h2 id="lore-character-name" style="color: var(--theme-primary); margin-bottom: 14px; font-size: 1.55rem;"></h2>
+            <div id="lore-character-text" style="font-size: 1.05rem; line-height: 1.65; color: #334155;"></div>
+            <div style="text-align: center; margin-top: 22px;">
+                <button class="btn" onclick="closeCharacterModal()">Cerrar Ventana ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE PISTA DE LOS REYES MAGOS (DISPONIBLE DESDE EL PROBLEMA 2) -->
+    <div class="modal" id="magi-hint-modal">
+        <div class="modal-content" style="max-width: 580px; border-color: #6D28D9;">
+            <span class="close-modal" onclick="closeMagiHintModal()" style="color: #6D28D9;">&times;</span>
+            <h2 id="magi-hint-title" style="color: #6D28D9; margin-bottom: 10px; font-size: 1.5rem;">👑 Consejo Real de Oriente</h2>
+            <p style="font-size: 0.95rem; color: #64748B; margin-bottom: 12px;">
+                Como ya liberasteis a Sus Majestades en Oriente, uno de ellos os envía esta orientación matemática:
+            </p>
+            <div class="magi-hint-card" id="magi-hint-body"></div>
+            <div style="text-align: center; margin-top: 18px;">
+                <button class="btn" style="background: #6D28D9; box-shadow: 0 4px 0 #F59E0B;" onclick="closeMagiHintModal()">¡Gracias, Majestad! 🙏</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MODO PROFESOR -->
+    <div class="modal" id="teacher-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeTeacherModal()">&times;</span>
+            <h2 style="color: var(--theme-primary); margin-bottom: 15px;">🔒 Panel de Control del Profesor</h2>
+            
+            <div id="teacher-login-section">
+                <p style="margin-bottom: 15px;">Introduce la contraseña docente para acceder al solucionario completo:</p>
+                <div class="form-group">
+                    <input type="password" id="teacher-pass-input" placeholder="Contraseña de acceso">
+                </div>
+                <button class="btn" onclick="verifyTeacherPass()">Acceder</button>
+                <p id="teacher-error-msg" style="color: #DC2626; font-weight: bold; margin-top: 10px; display: none;">Contraseña incorrecta.</p>
+            </div>
+
+            <div id="teacher-content-section" style="display: none;">
+                <h3 style="color: var(--theme-secondary); margin-bottom: 15px;">Solucionario Completo (4º ESO Matemáticas B)</h3>
+                <div id="solutions-list">
+                    <!-- Se llena con las soluciones detalladas -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // FUNCIONES AUXILIARES PARA RENDERIZADO MATEMÁTICO PURO EN HTML + CSS
+        function mVar(v) {
+            return `<span class="math-var">${v}</span>`;
+        }
+        function mFrac(num, den) {
+            return `<span class="math-frac"><span class="math-frac-num">${num}</span><span class="math-frac-den">${den}</span></span>`;
+        }
+        function mSys(eq1, eq2) {
+            return `<div class="math-system-box"><span class="math-brace">{</span><div class="math-system-eqs"><div>${eq1}</div><div>${eq2}</div></div></div>`;
+        }
+        function mSqrt(rad) {
+            return `<span class="math-sqrt"><span class="math-sqrt-sign">&radic;</span><span class="math-sqrt-radicand">${rad}</span></span>`;
+        }
+
+        // ESTRUCTURA DE LOS 6 RETOS TEMÁTICOS (TODO FORMATEADO CON HTML/CSS PURO)
+        const problems = [
+            {
+                id: 1,
+                shortName: "Reyes Magos",
+                themeClass: "theme-reyes",
+                ornaments: ["👑", "⭐", "🐪", "🎁", "✨"],
+                title: "Misión 1 (Oriente): Los Tres Reyes Magos",
+                type: "SCD",
+                typeLabel: "Sistema Compatible Determinado (1 solución)",
+                difficulty: "Fase 1: Liberación Inicial",
+                characterName: "Sus Majestades los Tres Reyes Magos de Oriente",
+                origin: "Tradición de España e Hispanoamérica (6 de enero)",
+                lore: `<p style="margin-bottom:10px;"><strong>Melchor, Gaspar y Baltasar</strong> son los sabios de Oriente que, guiados por una estrella brillante, viajaron hasta Belén portando tres presentes simbólicos: <strong>oro, incienso y mirra</strong>.</p>
+                       <p>Según la tradición española, la noche del 5 al 6 de enero recorren las casas dejando regalos a los niños que se han portado bien (y carbón dulce a los que han sido traviesos), mientras las familias dejan zapatos limpios, agua para los camellos y dulces típicos como el Roscón de Reyes.</p>`,
+                magiHint: null,
+                desc: `Krampus ha encerrado a Melchor, Gaspar y Baltasar en la Torre de Oriente tras mezclar sus cofres de monedas de oro y gramos de incienso.<br><br>
+                Sabemos que <strong>el doble de las monedas de oro menos la tercera parte de los gramos de incienso equivale a 34</strong>. Además, <strong>si sumamos la quinta parte de las monedas de oro con la mitad de los gramos de incienso, obtenemos 13</strong>.
+                <div class="variables-legend">
+                    📌 <strong>Incógnitas a utilizar:</strong> <span class="math-expr">${mVar('x')} =</span> número de monedas de oro; &nbsp; <span class="math-expr">${mVar('y')} =</span> gramos de incienso.
+                </div>`,
+                labelX: "Valor de x (monedas de oro):",
+                labelY: "Valor de y (gramos de incienso):",
+                imageFile: "./resources/img_reto1_reyes.png",
+                solX: 20,
+                solY: 18,
+                explanation: `<strong>Planteamiento:</strong><br>
+                ${mSys(
+                    `2${mVar('x')} &minus; ${mFrac(mVar('y'), '3')} = 34`,
+                    `${mFrac(mVar('x'), '5')} + ${mFrac(mVar('y'), '2')} = 13`
+                )}<br>
+                <strong>Resolución:</strong><br>
+                &bull; Multiplicamos la 1ª ecuación por 3: <span class="math-expr">6${mVar('x')} &minus; ${mVar('y')} = 102 &rArr; ${mVar('y')} = 6${mVar('x')} &minus; 102</span><br>
+                &bull; Multiplicamos la 2ª ecuación por 10: <span class="math-expr">2${mVar('x')} + 5${mVar('y')} = 130</span><br>
+                &bull; Sustituyendo: <span class="math-expr">2${mVar('x')} + 5(6${mVar('x')} &minus; 102) = 130 &rArr; 32${mVar('x')} = 640 &rArr; <strong>${mVar('x')} = 20</strong></span><br>
+                &bull; Hallamos <span class="math-var">y</span>: <span class="math-expr">${mVar('y')} = 6(20) &minus; 102 = <strong>18</strong></span><br>
+                <strong>Clasificación:</strong> <strong>SCD</strong> con solución única <strong>${mVar('x')} = 20 monedas de oro</strong> e <strong>${mVar('y')} = 18 gramos de incienso</strong>.`
+            },
+            {
+                id: 2,
+                shortName: "El Paje Real",
+                themeClass: "theme-paje",
+                ornaments: ["📜", "✒️", "👑", "✉️", "🏰"],
+                title: "Misión 2 (Logística Real): El Paje Real",
+                type: "SCI",
+                typeLabel: "Sistema Compatible Indeterminado (Infinitas soluciones)",
+                difficulty: "Fase 2: Ruta Mágica",
+                characterName: "El Paje Real (Emisario de Sus Majestades)",
+                origin: "Tradición Real Española (Días previos a la Cabalgata)",
+                lore: `<p style="margin-bottom:10px;">El <strong>Paje Real</strong> (también conocido como Cartero Real o Embajador Real) es el ayudante de confianza de los Reyes Magos encargado de recoger las cartas de los niños días antes de la Noche de Reyes.</p>
+                       <p>Viste elegantes trajes palaciegos y visita plazas, colegios y ayuntamientos para asegurarse de que ningún deseo quede sin registrar antes de que parta la comitiva desde Oriente.</p>`,
+                magiHint: `<strong>👑 Pista del Rey Melchor:</strong><br>
+                           "¡Mucho cuidado con las trampas de Krampus, jóvenes matemáticos! Traducid frase a frase el enunciado y observad los coeficientes de ambas ecuaciones. ¿Son proporcionales entre sí? Si todas las incógnitas se anulan y llegáis a <span class="math-expr">0 = 0</span>, estaréis ante infinitas soluciones sobre una misma recta: despejad <span class="math-var">y</span> en una de las ecuaciones para hallar <span class="math-var">m</span> y <span class="math-var">n</span>."`,
+                desc: `¡Ya habéis liberado a los Reyes Magos! Ahora viajan con vosotros. Vuestra primera parada es ayudar al <strong>Paje Real</strong>, cuyo ordenador de clasificación de cartas buenas y cartas con peticiones imposibles ha sido saboteado por Krampus.<br><br>
+                El registro principal indica que <strong>el triple de las cartas buenas menos el doble de las cartas imposibles da un índice de 12</strong>. Sin embargo, el servidor de respaldo marca que <strong>si tomamos el opuesto de seis veces las cartas buenas y le sumamos el cuádruple de las cartas imposibles, el resultado es &minus;24</strong>.
+                <div class="variables-legend">
+                    📌 <strong>Incógnitas a utilizar:</strong> <span class="math-expr">${mVar('x')} =</span> número de cartas buenas; &nbsp; <span class="math-expr">${mVar('y')} =</span> número de cartas con peticiones imposibles.
+                </div>`,
+                labelX: "Valor de x:",
+                labelY: "Valor de y:",
+                imageFile: "./resources/img_reto2_paje.png",
+                solM: 1.5,   // 3/2
+                solN: -6,    // y = (3/2)x - 6
+                explanation: `<strong>Planteamiento:</strong><br>
+                ${mSys(
+                    `3${mVar('x')} &minus; 2${mVar('y')} = 12`,
+                    `&minus;6${mVar('x')} + 4${mVar('y')} = &minus;24`
+                )}<br>
+                <strong>Resolución:</strong><br>
+                &bull; La segunda ecuación es la primera multiplicada por &minus;2, por lo que al reducir se obtiene <span class="math-expr">0 = 0</span>. Es un <strong>SCI (infinitas soluciones)</strong>.<br>
+                &bull; Despejando <span class="math-var">y</span> en la primera ecuación: <span class="math-expr">2${mVar('y')} = 3${mVar('x')} &minus; 12 &rArr; ${mVar('y')} = ${mFrac('3', '2')}${mVar('x')} &minus; 6</span><br>
+                <strong>Recta solución:</strong> Pendiente <strong><span class="math-var">m</span> = ${mFrac('3', '2')} (1.5)</strong> y ordenada en el origen <strong><span class="math-var">n</span> = &minus;6</strong>.`
+            },
+            {
+                id: 3,
+                shortName: "El Olentzero",
+                themeClass: "theme-olentzero",
+                ornaments: ["🪵", "🔥", "🏔️", "🎁", "🎶"],
+                title: "Misión 3 (Tradiciones del Norte): El Olentzero",
+                type: "SCD",
+                typeLabel: "Sistema Compatible Determinado (1 solución)",
+                difficulty: "Fase 2: Ruta Mágica",
+                characterName: "El Olentzero (Carbonero de los Bosques)",
+                origin: "Tradición de Navarra y País Vasco (24 de diciembre)",
+                lore: `<p style="margin-bottom:10px;">El <strong>Olentzero</strong> es un entrañable carbonero mitológico que vive en los bosques de los Pirineos navarros y vascos, vestido con ropa tradicional de montaña, abarca, pañuelo al cuello y su inseparable <em>txapela</em> (boina).</p>
+                       <p>Según la leyenda, cuando nació Jesús bajó de las montañas para anunciar la buena nueva y desde entonces, cada Nochebuena (24 de diciembre), baja de los montes cargado con un gran saco de regalos para repartir ilusión en todos los hogares.</p>`,
+                magiHint: `<strong>👑 Pista del Rey Baltasar:</strong><br>
+                           "Para rescatar el almacén del Olentzero recordad las fórmulas geométricas del rectángulo: el perímetro es la suma de todos sus lados (<span class="math-expr">2${mVar('x')} + 2${mVar('y')}</span>) y el área es el producto de su base por su altura (<span class="math-expr">${mVar('x')} &middot; ${mVar('y')}</span>). Despejad una incógnita en la ecuación lineal y sustituidla en la ecuación del área."`,
+                desc: `Krampus ha escondido los sacos de carbón dulce y los troncos de leña del <strong>Olentzero</strong> en una parcela rectangular oculta en el bosque de Navarra.<br><br>
+                Sabemos que <strong>el perímetro de dicha parcela rectangular es de 34 metros</strong> y que <strong>su área total es de 60 metros cuadrados</strong>. Averigua las dimensiones de la parcela sabiendo que el largo es mayor que el ancho (<span class="math-expr">${mVar('x')} &gt; ${mVar('y')}</span>).
+                <div class="variables-legend">
+                    📌 <strong>Incógnitas a utilizar:</strong> <span class="math-expr">${mVar('x')} =</span> largo de la parcela (en metros); &nbsp; <span class="math-expr">${mVar('y')} =</span> ancho de la parcela (en metros).
+                </div>`,
+                labelX: "Valor de x (largo en m):",
+                labelY: "Valor de y (ancho en m):",
+                imageFile: "./resources/img_reto3_olentzero.png",
+                solX: 12,
+                solY: 5,
+                explanation: `<strong>Planteamiento:</strong><br>
+                ${mSys(
+                    `2${mVar('x')} + 2${mVar('y')} = 34`,
+                    `${mVar('x')} &middot; ${mVar('y')} = 60`
+                )}<br>
+                <strong>Resolución:</strong><br>
+                &bull; Simplificamos la 1ª ecuación dividiendo entre 2: <span class="math-expr">${mVar('x')} + ${mVar('y')} = 17 &rArr; ${mVar('y')} = 17 &minus; ${mVar('x')}</span><br>
+                &bull; Sustituimos en la 2ª ecuación: <span class="math-expr">${mVar('x')}(17 &minus; ${mVar('x')}) = 60 &rArr; ${mVar('x')}<sup>2</sup> &minus; 17${mVar('x')} + 60 = 0</span><br>
+                &bull; Ecuación de 2º grado: <span class="math-expr">${mVar('x')} = ${mFrac(`17 &plusmn; ${mSqrt('289 &minus; 240')}`, '2')} = ${mFrac('17 &plusmn; 7', '2')} &rArr; ${mVar('x')}<sub>1</sub> = 12, &nbsp; ${mVar('x')}<sub>2</sub> = 5</span><br>
+                <strong>Clasificación:</strong> Como <span class="math-expr">${mVar('x')} &gt; ${mVar('y')}</span>, es un <strong>SCD</strong> con <strong>${mVar('x')} = 12 m</strong> e <strong>${mVar('y')} = 5 m</strong>.`
+            },
+            {
+                id: 4,
+                shortName: "El Tió de Nadal",
+                themeClass: "theme-tio",
+                ornaments: ["🪵", "🍊", "🍬", "🧣", "🎶"],
+                title: "Misión 4 (Tradiciones de Cataluña y Aragón): El Tió de Nadal",
+                type: "SI",
+                typeLabel: "Sistema Incompatible (Sin solución)",
+                difficulty: "Fase 2: Ruta Mágica",
+                characterName: "El Tió de Nadal (Tronco Mágico)",
+                origin: "Tradición de Cataluña y Aragón (8 al 24 de diciembre)",
+                lore: `<p style="margin-bottom:10px;">El <strong>Tió de Nadal</strong> (o <em>Tronca de Nadal</em> en Aragón) es un tronco mágico con cara sonriente, patas de madera y una barretina roja que aparece en las casas a principios de diciembre.</p>
+                       <p>Los niños lo tapan con una manta para que no pase frío y lo alimentan cada día con pieles de mandarina, frutos secos y turrón. En Nochebuena, mientras cantan canciones tradicionales y lo golpean suavemente con bastones, ¡el Tió "caga" dulces, barquillos y pequeños regalos!</p>`,
+                magiHint: `<strong>👑 Pista del Rey Gaspar:</strong><br>
+                           "¡Alerta, jóvenes aliados! Escribid las dos ecuaciones y eliminad los denominadores de la primera multiplicando por el mínimo común múltiplo de <span class="math-expr">4</span> y <span class="math-expr">3</span>. Comparad lo que os queda con la segunda ecuación... ¿Pueden cumplirse ambas condiciones al mismo tiempo?"`,
+                desc: `El <strong>Tió de Nadal</strong> está indispuesto porque Krampus ha manipulado el dispensador automático de mandarinas y tabletas de turrón.<br><br>
+                Para que el Tió haga magia, <strong>la cuarta parte del número de mandarinas más la tercera parte de las tabletas de turrón debe ser igual a 5</strong>. Sin embargo, Krampus ha programado el dispensador para que <strong>el triple de las mandarinas más el cuádruple de las tabletas de turrón sea igual a 48</strong>.
+                <div class="variables-legend">
+                    📌 <strong>Incógnitas a utilizar:</strong> <span class="math-expr">${mVar('x')} =</span> número de mandarinas; &nbsp; <span class="math-expr">${mVar('y')} =</span> número de tabletas de turrón.
+                </div>`,
+                labelX: "Valor de x:",
+                labelY: "Valor de y:",
+                imageFile: "./resources/img_reto4_tio.png",
+                explanation: `<strong>Planteamiento:</strong><br>
+                ${mSys(
+                    `${mFrac(mVar('x'), '4')} + ${mFrac(mVar('y'), '3')} = 5`,
+                    `3${mVar('x')} + 4${mVar('y')} = 48`
+                )}<br>
+                <strong>Resolución:</strong><br>
+                &bull; Multiplicamos la 1ª ecuación por 12 para quitar denominadores: <span class="math-expr">3${mVar('x')} + 4${mVar('y')} = 60</span><br>
+                &bull; La 2ª ecuación indica que <span class="math-expr">3${mVar('x')} + 4${mVar('y')} = 48</span>.<br>
+                &bull; Restando ambas ecuaciones llegamos a <span class="math-expr">0 = 12</span> (absurdo). Son rectas paralelas.<br>
+                <strong>Clasificación:</strong> <strong>Sistema Incompatible (sin solución)</strong>.`
+            },
+            {
+                id: 5,
+                shortName: "Rudolf el Reno",
+                themeClass: "theme-rudolf",
+                ornaments: ["🦌", "🔴", "❄️", "🛷", "⚡"],
+                title: "Misión 5 (Transporte Aéreo): Rudolf el Reno",
+                type: "SCD",
+                typeLabel: "Sistema Compatible Determinado (1 solución)",
+                difficulty: "Fase 2: Ruta Mágica",
+                characterName: "Rudolf, el Reno de la Nariz Roja",
+                origin: "Tradición Internacional del Polo Norte (Nochebuena)",
+                lore: `<p style="margin-bottom:10px;"><strong>Rudolf</strong> es el noveno y más joven de los renos que tiran del trineo volador de Papá Noel. Al principio era objeto de burlas por haber nacido con una nariz peculiar que brillaba con una intensa luz roja.</p>
+                       <p>Sin embargo, una Nochebuena cubierta por una densa tormenta de nieve y niebla que impedía volar, Papá Noel eligió a Rudolf para liderar el tiro. Gracias al potente faro de su nariz, logró guiar el trineo a través de la tempestad y salvar la entrega de regalos en todo el mundo.</p>`,
+                magiHint: `<strong>👑 Pista del Rey Baltasar:</strong><br>
+                           "Para devolver el brillo a la nariz de Rudolf, plantead la suma de los cuadrados igualada a <span class="math-expr">100</span> y la diferencia lineal igualada a <span class="math-expr">2</span>. Despejad <span class="math-var">x</span> en la ecuación sencilla, sustituid en la cuadrática (¡cuidado con el cuadrado de la suma!) y descartad las soluciones negativas."`,
+                desc: `Krampus ha apagado el brillo de la nariz de <strong>Rudolf</strong>. Para recargar el sistema de navegación aérea, debéis calibrar la energía lumínica y la velocidad de vuelo (ambas magnitudes estrictamente positivas).<br><br>
+                El manual del trineo indica que <strong>la suma de los cuadrados de la energía lumínica y de la velocidad de vuelo debe ser igual a 100</strong>, y que <strong>la diferencia entre la energía lumínica y la velocidad de vuelo debe ser igual a 2</strong>.
+                <div class="variables-legend">
+                    📌 <strong>Incógnitas a utilizar:</strong> <span class="math-expr">${mVar('x')} =</span> energía lumínica (<span class="math-expr">${mVar('x')} &gt; 0</span>); &nbsp; <span class="math-expr">${mVar('y')} =</span> velocidad de vuelo (<span class="math-expr">${mVar('y')} &gt; 0</span>).
+                </div>`,
+                labelX: "Valor de x (energía lumínica):",
+                labelY: "Valor de y (velocidad de vuelo):",
+                imageFile: "./resources/img_reto5_rudolf.png",
+                solX: 8,
+                solY: 6,
+                explanation: `<strong>Planteamiento:</strong><br>
+                ${mSys(
+                    `${mVar('x')}<sup>2</sup> + ${mVar('y')}<sup>2</sup> = 100`,
+                    `${mVar('x')} &minus; ${mVar('y')} = 2`
+                )}<br>
+                <strong>Resolución:</strong><br>
+                &bull; Despejamos <span class="math-expr">${mVar('x')} = ${mVar('y')} + 2</span> y sustituimos en la 1ª ecuación:<br>
+                &bull; <span class="math-expr">(${mVar('y')} + 2)<sup>2</sup> + ${mVar('y')}<sup>2</sup> = 100 &rArr; 2${mVar('y')}<sup>2</sup> + 4${mVar('y')} &minus; 96 = 0 &rArr; ${mVar('y')}<sup>2</sup> + 2${mVar('y')} &minus; 48 = 0</span><br>
+                &bull; Resolviendo: <span class="math-expr">${mVar('y')} = ${mFrac(`&minus;2 &plusmn; ${mSqrt('4 + 192')}`, '2')} = ${mFrac('&minus;2 &plusmn; 14', '2')} &rArr; ${mVar('y')}<sub>1</sub> = 6, &nbsp; ${mVar('y')}<sub>2</sub> = &minus;8</span> (descartada por negativa).<br>
+                &bull; Sustituyendo <span class="math-expr">${mVar('y')} = 6</span>: <span class="math-expr">${mVar('x')} = 6 + 2 = <strong>8</strong></span><br>
+                <strong>Clasificación:</strong> <strong>SCD</strong> (en el contexto positivo) con <strong>${mVar('x')} = 8</strong> e <strong>${mVar('y')} = 6</strong>.`
+            },
+            {
+                id: 6,
+                shortName: "Papá Noel",
+                themeClass: "theme-papanoel",
+                ornaments: ["🎅", "🎄", "🎁", "🚂", "🔔"],
+                title: "Misión 6 (El Gran Taller Final): Papá Noel / San Nicolás",
+                type: "SCD",
+                typeLabel: "Sistema Compatible Determinado (1 solución)",
+                difficulty: "Fase 2: Desafío Final",
+                characterName: "Papá Noel / San Nicolás",
+                origin: "Tradición Universal (Inspirada en San Nicolás de Bari, 25 de diciembre)",
+                lore: `<p style="margin-bottom:10px;"><strong>Papá Noel</strong> (también llamado Santa Claus o San Nicolás) tiene su origen histórico en <strong>Nicolás de Bari</strong>, un obispo del siglo IV célebre por su generosidad secreta hacia los niños y las familias más necesitadas.</p>
+                       <p>Según la tradición navideña moderna, vive en Laponia (Polo Norte) junto a la Señora Claus y cientos de elfos artesanos que fabrican juguetes durante todo el año para repartirlos la noche del 24 al 25 de diciembre en su trineo mágico.</p>`,
+                magiHint: `<strong>👑 Pista Conjunta de Melchor y Baltasar:</strong><br>
+                           "¡Este es el último golpe contra Krampus! Leed con precisión el orden de las operaciones: al número de trenes (<span class="math-var">x</span>) se le resta el cociente formado por 'el doble de muñecos menos uno' dividido entre <span class="math-expr">3</span>, y eso da <span class="math-expr">7</span>. En la segunda ecuación multiplicad ambos juguetes y sumad el doble de los trenes para igualar a <span class="math-expr">70</span>. ¡Ojo con el signo menos delante de la fracción!"`,
+                desc: `¡Habéis llegado al corazón de la fábrica de juguetes de <strong>Papá Noel</strong>! Krampus ha bloqueado la cadena de montaje de trenes de madera y muñecos articulados con un último enigma.<br><br>
+                Sabemos que <strong>si al número de trenes de madera le restamos la tercera parte de la diferencia entre el doble de muñecos articulados y 1, el resultado es 7</strong>. Por otro lado, <strong>si al producto de ambos tipos de juguetes le sumamos el doble del número de trenes de madera, obtenemos 70</strong>. Halla cuántos juguetes enteros y positivos se fabrican de cada tipo.
+                <div class="variables-legend">
+                    📌 <strong>Incógnitas a utilizar:</strong> <span class="math-expr">${mVar('x')} =</span> número de trenes de madera; &nbsp; <span class="math-expr">${mVar('y')} =</span> número de muñecos articulados.
+                </div>`,
+                labelX: "Valor de x (trenes de madera):",
+                labelY: "Valor de y (muñecos articulados):",
+                imageFile: "./resources/img_reto6_papanoel.png",
+                solX: 10,
+                solY: 5,
+                explanation: `<strong>Planteamiento:</strong><br>
+                ${mSys(
+                    `${mVar('x')} &minus; ${mFrac(`2${mVar('y')} &minus; 1`, '3')} = 7`,
+                    `${mVar('x')} &middot; ${mVar('y')} + 2${mVar('x')} = 70`
+                )}<br>
+                <strong>Resolución:</strong><br>
+                &bull; Multiplicamos la 1ª ecuación por 3: <span class="math-expr">3${mVar('x')} &minus; (2${mVar('y')} &minus; 1) = 21 &rArr; 3${mVar('x')} &minus; 2${mVar('y')} = 20 &rArr; ${mVar('y')} = ${mFrac(`3${mVar('x')} &minus; 20`, '2')}</span><br>
+                &bull; Sustituimos en la 2ª ecuación: <span class="math-expr">${mVar('x')}(${mFrac(`3${mVar('x')} &minus; 20`, '2')}) + 2${mVar('x')} = 70 &rArr; 3${mVar('x')}<sup>2</sup> &minus; 16${mVar('x')} &minus; 140 = 0</span><br>
+                &bull; Ecuación de 2º grado: <span class="math-expr">${mVar('x')} = ${mFrac(`16 &plusmn; ${mSqrt('256 + 1680')}`, '6')} = ${mFrac('16 &plusmn; 44', '6')} &rArr; ${mVar('x')}<sub>1</sub> = 10, &nbsp; ${mVar('x')}<sub>2</sub> = &minus;${mFrac('14', '3')}</span> (descartada).<br>
+                &bull; Sustituyendo <span class="math-expr">${mVar('x')} = 10</span>: <span class="math-expr">${mVar('y')} = ${mFrac('3(10) &minus; 20', '2')} = <strong>5</strong></span><br>
+                <strong>Clasificación:</strong> <strong>SCD</strong> con <strong>${mVar('x')} = 10 trenes</strong> e <strong>${mVar('y')} = 5 muñecos</strong>.`
+            }
+        ];
+
+        // ESTADO DE RESPUESTAS POR PROBLEMA
+        let currentProblemIndex = 0;
+        let studentAnswers = Array.from({ length: 6 }, () => ({
+            type: "",
+            x: "",
+            y: "",
+            m: "",
+            n: ""
+        }));
+        let timerInterval = null;
+        let timeLeft = 0;
+        let studentName = "";
+
+        // INICIALIZACIÓN
+        window.onload = function() {
+            renderTeacherSolutions();
+        };
+
+        // CAMBIAR ESTILO VISUAL Y CSS SEGÚN EL PERSONAJE DE CADA PRUEBA
+        function applyCharacterTheme(themeClass, ornamentsArray) {
+            document.body.className = "";
+            if (themeClass) {
+                document.body.classList.add(themeClass);
+            }
+            const ornamentsContainer = document.getElementById('top-ornaments');
+            if (ornamentsArray && ornamentsArray.length === 5) {
+                ornamentsContainer.innerHTML = ornamentsArray
+                    .map(icon => `<div class="ornament">${icon}</div>`)
+                    .join('');
+            }
+        }
+
+        // FUNCIONES DE ALERTA PERSONALIZADA
+        function showAlert(message) {
+            document.getElementById('alert-modal-text').textContent = message;
+            document.getElementById('custom-alert-modal').style.display = 'flex';
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').style.display = 'none';
+        }
+
+        // MODALES DE PERSONAJE Y PISTA DE REYES MAGOS
+        function openCharacterModal() {
+            const p = problems[currentProblemIndex];
+            document.getElementById('lore-origin-badge').textContent = p.origin;
+            document.getElementById('lore-character-name').textContent = p.characterName;
+            document.getElementById('lore-character-text').innerHTML = p.lore;
+            document.getElementById('character-lore-modal').style.display = 'flex';
+        }
+
+        function closeCharacterModal() {
+            document.getElementById('character-lore-modal').style.display = 'none';
+        }
+
+        function openMagiHintModal() {
+            const p = problems[currentProblemIndex];
+            if (!p.magiHint) return;
+            document.getElementById('magi-hint-title').textContent = `👑 Pista Real para: ${p.shortName}`;
+            const hintBody = document.getElementById('magi-hint-body');
+            hintBody.innerHTML = p.magiHint;
+            document.getElementById('magi-hint-modal').style.display = 'flex';
+        }
+
+        function closeMagiHintModal() {
+            document.getElementById('magi-hint-modal').style.display = 'none';
+        }
+
+        // NAVEGACIÓN Y PANTALLAS
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const activeScreen = document.getElementById(screenId);
+            activeScreen.classList.add('active');
+        }
+
+        // INICIAR JUEGO
+        function startGame() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if (!nameInput) {
+                showAlert("¡Por favor, escribid el nombre de vuestro equipo antes de comenzar la misión navideña!");
+                return;
+            }
+            studentName = nameInput;
+            const duration = parseInt(document.getElementById('time-select').value);
+            
+            // Iniciar Temporizador
+            timeLeft = duration * 60;
+            startTimer();
+
+            // Cargar Misión 1 (Reyes Magos)
+            currentProblemIndex = 0;
+            loadProblem(currentProblemIndex);
+            showScreen('screen-problem');
+        }
+
+        // TEMPORIZADOR
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishGame(false, "¡Se ha agotado el tiempo antes de que pudierais detener a Krampus!");
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timer-display').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // MOSTRAR U OCULTAR CAMPOS SEGÚN EL DESPLEGABLE (SCD / SCI / SI)
+        function handleSystemTypeChange() {
+            const selectedType = document.getElementById('system-type-select').value;
+            document.getElementById('box-scd').style.display = (selectedType === 'SCD') ? 'block' : 'none';
+            document.getElementById('box-sci').style.display = (selectedType === 'SCI') ? 'block' : 'none';
+            document.getElementById('box-si').style.display = (selectedType === 'SI') ? 'block' : 'none';
+            
+            saveCurrentAnswer();
+        }
+
+        // CARGA DE PROBLEMA CON ESTILO PROPIO DEL PERSONAJE
+        function loadProblem(index) {
+            const p = problems[index];
+            const saved = studentAnswers[index];
+            
+            // Aplicar paleta CSS y adornos específicos del personaje
+            applyCharacterTheme(p.themeClass, p.ornaments);
+
+            document.getElementById('problem-progress').textContent = `Misión ${index + 1} de 6 | ${p.difficulty}`;
+            document.getElementById('problem-title').textContent = p.title;
+            
+            // Configurar botón de tradición del personaje
+            document.getElementById('btn-character-lore').innerHTML = `📖 Conocer a ${p.shortName} y su Tradición`;
+
+            // Configurar botón de pista de los Reyes Magos (solo a partir del problema 2, índice >= 1)
+            const magiBtn = document.getElementById('btn-magi-hint');
+            if (index >= 1 && p.magiHint) {
+                magiBtn.style.display = 'inline-flex';
+            } else {
+                magiBtn.style.display = 'none';
+            }
+
+            // 1. Imagen centrada encima del texto
+            const imgBox = document.getElementById('problem-image-box');
+            imgBox.innerHTML = `
+                <img src="${p.imageFile}" alt="Ilustración ${p.shortName}" class="game-image">
+            `;
+
+            // 2. Texto del enunciado
+            const descBox = document.getElementById('problem-desc');
+            descBox.innerHTML = p.desc;
+
+            // 3. Etiquetas y valores guardados del desplegable y sus campos
+            document.getElementById('label-scd-x').textContent = p.labelX || "Valor de x:";
+            document.getElementById('label-scd-y').textContent = p.labelY || "Valor de y:";
+
+            document.getElementById('system-type-select').value = saved.type;
+            document.getElementById('input-scd-x').value = saved.x;
+            document.getElementById('input-scd-y').value = saved.y;
+            document.getElementById('input-sci-m').value = saved.m;
+            document.getElementById('input-sci-n').value = saved.n;
+
+            document.getElementById('box-scd').style.display = (saved.type === 'SCD') ? 'block' : 'none';
+            document.getElementById('box-sci').style.display = (saved.type === 'SCI') ? 'block' : 'none';
+            document.getElementById('box-si').style.display = (saved.type === 'SI') ? 'block' : 'none';
+
+            document.getElementById('btn-prev').style.visibility = (index === 0) ? 'hidden' : 'visible';
+            
+            const nextBtn = document.getElementById('btn-next');
+            if (index === problems.length - 1) {
+                nextBtn.textContent = "Ir al Cofre Final 🔓";
+            } else {
+                nextBtn.textContent = "Siguiente Misión ➡️";
+            }
+        }
+
+        function saveCurrentAnswer() {
+            studentAnswers[currentProblemIndex] = {
+                type: document.getElementById('system-type-select').value,
+                x: document.getElementById('input-scd-x').value.trim(),
+                y: document.getElementById('input-scd-y').value.trim(),
+                m: document.getElementById('input-sci-m').value.trim(),
+                n: document.getElementById('input-sci-n').value.trim()
+            };
+        }
+
+        function navigateProblem(direction) {
+            saveCurrentAnswer();
+            currentProblemIndex += direction;
+
+            if (currentProblemIndex >= problems.length) {
+                openLockScreen();
+            } else if (currentProblemIndex < 0) {
+                currentProblemIndex = 0;
+            } else {
+                loadProblem(currentProblemIndex);
+            }
+        }
+
+        function goToProblem(problemNum) {
+            currentProblemIndex = problemNum - 1;
+            loadProblem(currentProblemIndex);
+            showScreen('screen-problem');
+        }
+
+        // PARSEAR NÚMEROS O FRACCIONES (ej: "3/2" o "1.5" o "1,5")
+        function parseMathNumber(str) {
+            if (!str) return NaN;
+            const clean = str.toString().trim().replace(',', '.').replace(/\s+/g, '');
+            if (clean.includes('/')) {
+                const parts = clean.split('/');
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parseFloat(parts[1]) !== 0) {
+                    return parseFloat(parts[0]) / parseFloat(parts[1]);
+                }
+                return NaN;
+            }
+            return parseFloat(clean);
+        }
+
+        // PANTALLA DEL CANDADO FINAL (RESUMEN DE CLASIFICACIÓN Y SOLUCIONES)
+        function openLockScreen() {
+            applyCharacterTheme("", ["👑", "📜", "🪵", "🦌", "🎅"]);
+            document.getElementById('lock-student-name').textContent = studentName;
+            
+            const summaryContainer = document.getElementById('summary-answers');
+            summaryContainer.innerHTML = "";
+
+            studentAnswers.forEach((ans, i) => {
+                const item = document.createElement('div');
+                item.className = 'summary-card';
+                
+                let detailText = `<span style="color:#DC2626;">Sin responder</span>`;
+                if (ans.type === 'SCD') {
+                    detailText = `<strong>SCD (1 sol.)</strong> &rarr; <span class="math-expr">${mVar('x')} = ${ans.x || '?'}, ${mVar('y')} = ${ans.y || '?'}</span>`;
+                } else if (ans.type === 'SCI') {
+                    detailText = `<strong>SCI (Infinitas)</strong> &rarr; <span class="math-expr">${mVar('y')} = (${ans.m || '?'})${mVar('x')} + (${ans.n || '?'})</span>`;
+                } else if (ans.type === 'SI') {
+                    detailText = `<strong>SI (Sin solución)</strong> &rarr; Rectas paralelas`;
+                }
+
+                item.innerHTML = `
+                    <div style="font-weight: 800; color: var(--theme-primary); margin-bottom: 4px;">
+                        ${i + 1}. ${problems[i].shortName}
+                    </div>
+                    <div>${detailText}</div>
+                `;
+                summaryContainer.appendChild(item);
+            });
+
+            showScreen('screen-lock');
+        }
+
+        // VALIDACIÓN DE LOS 6 SISTEMAS
+        function checkAllSolutions() {
+            let errors = [];
+
+            problems.forEach((p, idx) => {
+                const ans = studentAnswers[idx];
+                if (!ans.type) {
+                    errors.push(`Misión ${idx + 1} (${p.shortName}): No habéis seleccionado el tipo de sistema.`);
+                    return;
+                }
+                if (ans.type !== p.type) {
+                    errors.push(`Misión ${idx + 1} (${p.shortName}): La clasificación del sistema no es correcta.`);
+                    return;
+                }
+                if (p.type === 'SCD') {
+                    const ux = parseMathNumber(ans.x);
+                    const uy = parseMathNumber(ans.y);
+                    if (isNaN(ux) || isNaN(uy) || Math.abs(ux - p.solX) > 0.01 || Math.abs(uy - p.solY) > 0.01) {
+                        errors.push(`Misión ${idx + 1} (${p.shortName}): El tipo de sistema es correcto, pero los valores de <span class="math-var">x</span> o <span class="math-var">y</span> no coinciden.`);
+                    }
+                } else if (p.type === 'SCI') {
+                    const um = parseMathNumber(ans.m);
+                    const un = parseMathNumber(ans.n);
+                    if (isNaN(um) || isNaN(un) || Math.abs(um - p.solM) > 0.01 || Math.abs(un - p.solN) > 0.01) {
+                        errors.push(`Misión ${idx + 1} (${p.shortName}): Es un sistema compatible indeterminado, pero la ecuación de la recta <span class="math-expr">${mVar('y')} = ${mVar('m')}${mVar('x')} + ${mVar('n')}</span> no es correcta.`);
+                    }
+                }
+            });
+
+            if (errors.length === 0) {
+                finishGame(true);
+            } else {
+                const msg = `Krampus ha detectado ${errors.length} fallo(s) en vuestros cálculos:<br><br>&bull; ` + errors.join('<br>&bull; ');
+                finishGame(false, msg);
+            }
+        }
+
+        // FINALIZAR JUEGO
+        function finishGame(success, customFailHtml = "") {
+            clearInterval(timerInterval);
+            applyCharacterTheme("", ["🎄", "⭐", "🎁", "✨", "🔔"]);
+            document.querySelectorAll('.player-name-display').forEach(el => el.textContent = studentName);
+
+            if (success) {
+                document.getElementById('btn-retry-from-fail').style.display = 'none';
+                showScreen('screen-success');
+            } else {
+                const failBox = document.getElementById('fail-feedback-text');
+                if (customFailHtml) {
+                    failBox.innerHTML = customFailHtml;
+                }
+                // Permitir revisar si aún queda tiempo
+                document.getElementById('btn-retry-from-fail').style.display = (timeLeft > 0) ? 'inline-flex' : 'none';
+                showScreen('screen-fail');
+            }
+        }
+
+        function resetApp() {
+            studentAnswers = Array.from({ length: 6 }, () => ({ type: "", x: "", y: "", m: "", n: "" }));
+            document.getElementById('student-name').value = "";
+            applyCharacterTheme("", ["👑", "📜", "🪵", "🦌", "🎅"]);
+            showScreen('screen-0');
+        }
+
+        // MODAL MODO PROFESOR
+        function openTeacherModal() {
+            document.getElementById('teacher-modal').style.display = 'flex';
+        }
+
+        function closeTeacherModal() {
+            document.getElementById('teacher-modal').style.display = 'none';
+        }
+
+        function verifyTeacherPass() {
+            const pass = document.getElementById('teacher-pass-input').value;
+            const errorMsg = document.getElementById('teacher-error-msg');
+            
+            if (pass === 'PROFE2026') {
+                errorMsg.style.display = 'none';
+                document.getElementById('teacher-login-section').style.display = 'none';
+                document.getElementById('teacher-content-section').style.display = 'block';
+                renderTeacherSolutions();
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function renderTeacherSolutions() {
+            const listContainer = document.getElementById('solutions-list');
+            listContainer.innerHTML = "";
+
+            problems.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'solution-item';
+                item.innerHTML = `
+                    <h4 style="color:var(--theme-primary);">${p.title} <span class="teacher-badge">${p.typeLabel}</span></h4>
+                    <div style="font-size:0.98rem; color:#334155; margin-top: 8px;">${p.explanation}</div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
